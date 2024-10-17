@@ -1,47 +1,82 @@
 import tkinter as tk
+import random
+import copy
 
 class SudokuGame:
     BOARD_SIZE = 9
     SUBGRID_SIZE = 3
-    CELL_SIZE = 50
 
     def __init__(self, master):
         self.master = master
-        self.master.title("Sudoku")
-        self.game_frame = tk.Frame(self.master)
-        self.game_frame.pack(pady=20)
+        self.master.title("Sudoku Game")
+
+        # Create a canvas for drawing the grid
+        self.canvas = tk.Canvas(master, width=450, height=450)
+        self.canvas.pack()
+
         self.create_grid()
-        self.create_input_fields()
+        self.cells = self.create_input_fields()
+        self.board = [[0 for _ in range(self.BOARD_SIZE)] for _ in range(self.BOARD_SIZE)]
+        self.fill_board(self.board)
+        self.update_cells(self.board)
 
     def create_grid(self):
-        self.canvas = tk.Canvas(self.game_frame, width=self.CELL_SIZE * self.BOARD_SIZE, 
-                                height=self.CELL_SIZE * self.BOARD_SIZE)
-        self.canvas.grid(row=0, column=0, columnspan=self.BOARD_SIZE)
-
         for i in range(self.BOARD_SIZE + 1):
             line_width = 3 if i % self.SUBGRID_SIZE == 0 else 1
-            self.canvas.create_line(0, i * self.CELL_SIZE, 
-                                    self.CELL_SIZE * self.BOARD_SIZE, i * self.CELL_SIZE, 
-                                    width=line_width)
-            self.canvas.create_line(i * self.CELL_SIZE, 0, 
-                                    i * self.CELL_SIZE, self.CELL_SIZE * self.BOARD_SIZE, 
-                                    width=line_width)
+            self.canvas.create_line(0, i * 50, 450, i * 50, width=line_width)
+            self.canvas.create_line(i * 50, 0, i * 50, 450, width=line_width)
 
     def create_input_fields(self):
-        self.cells = []
+        cells = [[tk.Entry(self.master, width=2, justify='center', font=('Arial', 18)) 
+                  for _ in range(self.BOARD_SIZE)] for _ in range(self.BOARD_SIZE)]
         for i in range(self.BOARD_SIZE):
-            row = []
             for j in range(self.BOARD_SIZE):
-                var = tk.StringVar()
-                entry = tk.Entry(self.game_frame, width=2, justify='center', font=('Arial', 18),
-                                 textvariable=var, validate='key', validatecommand=(self.master.register(self.validate_input), '%P'))
-                entry.place(x=j * self.CELL_SIZE + 5, y=i * self.CELL_SIZE + 5,
-                           width=self.CELL_SIZE - 10, height=self.CELL_SIZE - 10)
-                row.append(entry)
-            self.cells.append(row)
+                cells[i][j].place(x=j * 50 + 5, y=i * 50 + 5,
+                                  width=40, height=40)
+        return cells
 
-    def validate_input(self, P):
-        return P == "" or (P.isdigit() and 1 <= int(P) <= 9)
+    def fill_board(self, board):
+        """Fill the board with a valid Sudoku solution."""
+        def is_valid(board, row, col, num):
+            # Check if num is not in the current row and column
+            for i in range(self.BOARD_SIZE):
+                if board[row][i] == num or board[i][col] == num:
+                    return False
+            
+            # Check if num is not in the current subgrid
+            start_row, start_col = self.SUBGRID_SIZE * (row // self.SUBGRID_SIZE), self.SUBGRID_SIZE * (col // self.SUBGRID_SIZE)
+            for i in range(self.SUBGRID_SIZE):
+                for j in range(self.SUBGRID_SIZE):
+                    if board[start_row + i][start_col + j] == num:
+                        return False
+            return True
+
+        def solve(board):
+            for row in range(self.BOARD_SIZE):
+                for col in range(self.BOARD_SIZE):
+                    if board[row][col] == 0:
+                        nums = list(range(1, self.BOARD_SIZE + 1))
+                        random.shuffle(nums)  # Shuffle numbers to ensure randomness
+                        for num in nums:
+                            if is_valid(board, row, col, num):
+                                board[row][col] = num
+                                if solve(board):
+                                    return True
+                                board[row][col] = 0  # Backtrack
+                        return False
+            return True
+
+        solve(board)
+
+    def update_cells(self, board):
+        """Update the input fields with the current board state."""
+        for i in range(self.BOARD_SIZE):
+            for j in range(self.BOARD_SIZE):
+                self.cells[i][j].config(state='normal', bg='white')
+                self.cells[i][j].delete(0, tk.END)
+                if board[i][j] != 0:
+                    self.cells[i][j].insert(0, str(board[i][j]))
+                    self.cells[i][j].config(state='disabled', disabledforeground='black')
 
 if __name__ == "__main__":
     root = tk.Tk()
