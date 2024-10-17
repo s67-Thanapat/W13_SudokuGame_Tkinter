@@ -1,18 +1,27 @@
 import tkinter as tk
+from tkinter import filedialog, messagebox
 import random
-import copy
 
 class SudokuGame:
     BOARD_SIZE = 9
     SUBGRID_SIZE = 3
+    CELL_SIZE = 50
 
     def __init__(self, master):
         self.master = master
         self.master.title("Sudoku Game")
 
+        # Create a frame for the board
+        self.board_frame = tk.Frame(self.master)
+        self.board_frame.pack()
+
+        # Create a frame for the buttons
+        self.button_frame = tk.Frame(self.master)
+        self.button_frame.pack(pady=20)
+
         # Create a canvas for drawing the grid
-        self.canvas = tk.Canvas(master, width=450, height=450)
-        self.canvas.pack()
+        self.canvas = tk.Canvas(self.board_frame, width=self.CELL_SIZE * self.BOARD_SIZE, height=self.CELL_SIZE * self.BOARD_SIZE)
+        self.canvas.grid(row=0, column=0)
 
         self.create_grid()
         self.cells = self.create_input_fields()
@@ -21,30 +30,29 @@ class SudokuGame:
         self.remove_numbers_from_board(self.board)  # Remove numbers from the board for gameplay
         self.update_cells(self.board)
 
+        # Add buttons
+        self.create_buttons()
+
     def create_grid(self):
         for i in range(self.BOARD_SIZE + 1):
             line_width = 3 if i % self.SUBGRID_SIZE == 0 else 1
-            self.canvas.create_line(0, i * 50, 450, i * 50, width=line_width)
-            self.canvas.create_line(i * 50, 0, i * 50, 450, width=line_width)
+            self.canvas.create_line(0, i * self.CELL_SIZE, self.CELL_SIZE * self.BOARD_SIZE, i * self.CELL_SIZE, width=line_width)
+            self.canvas.create_line(i * self.CELL_SIZE, 0, i * self.CELL_SIZE, self.CELL_SIZE * self.BOARD_SIZE, width=line_width)
 
     def create_input_fields(self):
-        cells = [[tk.Entry(self.master, width=2, justify='center', font=('Arial', 18)) 
+        cells = [[tk.Entry(self.board_frame, width=2, justify='center', font=('Arial', 18)) 
                   for _ in range(self.BOARD_SIZE)] for _ in range(self.BOARD_SIZE)]
         for i in range(self.BOARD_SIZE):
             for j in range(self.BOARD_SIZE):
-                cells[i][j].place(x=j * 50 + 5, y=i * 50 + 5,
-                                  width=40, height=40)
+                cells[i][j].place(x=j * self.CELL_SIZE + 5, y=i * self.CELL_SIZE + 5, width=self.CELL_SIZE - 10, height=self.CELL_SIZE - 10)
         return cells
 
     def fill_board(self, board):
         """Fill the board with a valid Sudoku solution."""
         def is_valid(board, row, col, num):
-            # Check if num is not in the current row and column
             for i in range(self.BOARD_SIZE):
                 if board[row][i] == num or board[i][col] == num:
                     return False
-            
-            # Check if num is not in the current subgrid
             start_row, start_col = self.SUBGRID_SIZE * (row // self.SUBGRID_SIZE), self.SUBGRID_SIZE * (col // self.SUBGRID_SIZE)
             for i in range(self.SUBGRID_SIZE):
                 for j in range(self.SUBGRID_SIZE):
@@ -71,12 +79,12 @@ class SudokuGame:
 
     def remove_numbers_from_board(self, board):
         """Randomly remove numbers from the board to create a playable Sudoku puzzle."""
-        num_to_remove = 30  # Number of cells to remove
+        num_to_remove = 30
         removed = 0
         while removed < num_to_remove:
             row = random.randint(0, self.BOARD_SIZE - 1)
             col = random.randint(0, self.BOARD_SIZE - 1)
-            if board[row][col] != 0:  # Only remove if the cell is not already empty
+            if board[row][col] != 0:
                 board[row][col] = 0
                 removed += 1
 
@@ -89,6 +97,28 @@ class SudokuGame:
                 if board[i][j] != 0:
                     self.cells[i][j].insert(0, str(board[i][j]))
                     self.cells[i][j].config(state='disabled', disabledforeground='black')
+
+    def create_buttons(self):
+        # ปุ่ม Reset Game
+        self.reset_button = tk.Button(self.button_frame, text="Reset Game", command=self.reset_board)
+        self.reset_button.pack(side=tk.LEFT, padx=20)
+
+        # ปุ่ม Save Game
+        self.save_button = tk.Button(self.button_frame, text="Save Game", command=self.save_game)
+        self.save_button.pack(side=tk.LEFT, padx=20)
+
+        # ปุ่ม Load Game
+        self.load_button = tk.Button(self.button_frame, text="Load Game", command=self.load_game)
+        self.load_button.pack(side=tk.LEFT, padx=20)
+
+    def reset_board(self):
+        pass
+
+    def save_game(self):
+        messagebox.showinfo("Save Game", "เกมถูกบันทึกเรียบร้อยแล้ว!")
+        
+    def load_game(self):
+        print("Loading game...")
 
 if __name__ == "__main__":
     root = tk.Tk()
