@@ -11,6 +11,7 @@ class SudokuGame:
         self.game_frame = tk.Frame(self.master)
         self.game_frame.pack(pady=20)
         self.create_grid()
+        self.create_input_fields()
 
     def create_grid(self):
         self.canvas = tk.Canvas(self.game_frame, width=self.CELL_SIZE * self.BOARD_SIZE, 
@@ -19,14 +20,28 @@ class SudokuGame:
 
         for i in range(self.BOARD_SIZE + 1):
             line_width = 3 if i % self.SUBGRID_SIZE == 0 else 1
-            # วาดเส้นแนวนอน
             self.canvas.create_line(0, i * self.CELL_SIZE, 
                                     self.CELL_SIZE * self.BOARD_SIZE, i * self.CELL_SIZE, 
                                     width=line_width)
-            # วาดเส้นแนวตั้ง
             self.canvas.create_line(i * self.CELL_SIZE, 0, 
                                     i * self.CELL_SIZE, self.CELL_SIZE * self.BOARD_SIZE, 
                                     width=line_width)
+
+    def create_input_fields(self):
+        self.cells = []
+        for i in range(self.BOARD_SIZE):
+            row = []
+            for j in range(self.BOARD_SIZE):
+                var = tk.StringVar()
+                entry = tk.Entry(self.game_frame, width=2, justify='center', font=('Arial', 18),
+                                 textvariable=var, validate='key', validatecommand=(self.master.register(self.validate_input), '%P'))
+                entry.place(x=j * self.CELL_SIZE + 5, y=i * self.CELL_SIZE + 5,
+                           width=self.CELL_SIZE - 10, height=self.CELL_SIZE - 10)
+                row.append(entry)
+            self.cells.append(row)
+
+    def validate_input(self, P):
+        return P == "" or (P.isdigit() and 1 <= int(P) <= 9)
 
 if __name__ == "__main__":
     root = tk.Tk()
