@@ -183,13 +183,105 @@ class SudokuGame:
 
     def update_wrong_attempts_label(self):
         self.wrong_attempts_label.config(text=f"ผิดพลาด: {self.wrong_attempts}/{self.MAX_WRONG_ATTEMPTS}")
-    
-    def save_game(self):
-        messagebox.showinfo("Save Game", "เกมถูกบันทึกเรียบร้อยแล้ว!")
-        
-    def load_game(self):
-        messagebox.showinfo("Load Game", "โหลดเกมสำเร็จ!")
 
+    def save_game(self):
+        if hasattr(self, 'loaded_file_path') and self.loaded_file_path:
+            file_path = self.loaded_file_path
+        else:
+            file_path = filedialog.asksaveasfilename(defaultextension=".txt", 
+                                                     filetypes=[("Text Files", "*.txt")])
+            if not file_path:
+                return
+
+        with open(file_path, 'w') as file:
+            # บันทึกจำนวนความผิดพลาดเป็นบรรทัดแรก
+            file.write(f"{self.wrong_attempts}\n")
+            for i in range(self.BOARD_SIZE):
+                row_data = []
+                for j in range(self.BOARD_SIZE):
+                    user_input = self.cells[i][j].get()
+                    # เซฟเฉพาะตัวเลขที่ผู้เล่นกรอกและถูกต้อง
+                    if user_input and user_input == str(self.solution[i][j]):
+                        row_data.append(user_input)
+                    else:
+                        row_data.append('0')  # หรือใช้ '0' เพื่อแสดงว่าตัวเลขไม่ได้ถูกกรอกหรือไม่ถูกต้อง
+                file.write(' '.join(row_data) + '\n')
+        messagebox.showinfo("Save Game", "เกมถูกบันทึกเรียบร้อยแล้ว!")
+
+    def load_game(self):
+        file_path = filedialog.askopenfilename(defaultextension=".txt", 
+                                               filetypes=[("Text Files", "*.txt")])
+        if file_path:
+            self.loaded_file_path = file_path
+            with open(file_path, 'r') as file:
+                lines = file.readlines()
+                if len(lines) < self.BOARD_SIZE + 1:
+                    messagebox.showerror("Error", "ไฟล์เกมไม่สมบูรณ์หรือผิดรูปแบบ")
+                    return
+
+                try:
+                    # อ่านจำนวนความผิดพลาดจากบรรทัดแรก
+                    self.wrong_attempts = int(lines[0].strip())
+                    board = []
+                    for line in lines[1:self.BOARD_SIZE + 1]:
+                        board.append(list(map(int, line.strip().split())))
+                except ValueError:
+                    messagebox.showerror("Error", "ไฟล์เกมมีข้อมูลที่ไม่ถูกต้อง")
+                    return
+
+            self.starting_puzzle = copy.deepcopy(board)
+            self.solution = self.generate_solution(board)
+
+            self.update_cells(self.starting_puzzle)
+
+            # อัปเดตสีของเซลล์ที่ถูกกรอก
+            for i in range(self.BOARD_SIZE):
+                for j in range(self.BOARD_SIZE):
+                    user_input = self.cells[i][j].get()
+                    if user_input != "" and user_input == str(self.solution[i][j]):
+                        self.cells[i][j].config(bg='green')  # เปลี่ยนสีเป็นเขียวถ้าถูกต้อง
+                    elif board[i][j] != 0:
+                        self.cells[i][j].config(bg='white')  # ถ้าเซลล์มีตัวเลขในปริศนาให้เปลี่ยนเป็นสีขาว
+
+            self.update_wrong_attempts_label()
+            self.game_over = False
+            self.save_button.config(state=tk.NORMAL)
+
+            # ตรวจสอบว่าเกมจบหรือไม่หลังจากโหลด
+            if self.wrong_attempts >= self.MAX_WRONG_ATTEMPTS:
+                self.end_game()
+
+    def generate_solution(self, board):
+        board_copy = copy.deepcopy(board)
+        
+        def is_valid(board, row, col, num):
+            for i in range(self.BOARD_SIZE):
+                if board[row][i] == num or board[i][col] == num:
+                    return False
+            start_row, start_col = self.SUBGRID_SIZE * (row // self.SUBGRID_SIZE), self.SUBGRID_SIZE * (col // self.SUBGRID_SIZE)
+            for i in range(self.SUBGRID_SIZE):
+                for j in range(self.SUBGRID_SIZE):
+                    if board[start_row + i][start_col + j] == num:
+                        return False
+            return True
+
+        def solve(board):
+            for row in range(self.BOARD_SIZE):
+                for col in range(self.BOARD_SIZE):
+                    if board[row][col] == 0:
+                        nums = list(range(1, self.BOARD_SIZE + 1))
+                        random.shuffle(nums)
+                        for num in nums:
+                            if is_valid(board, row, col, num):
+                                board[row][col] = num
+                                if solve(board):
+                                    return True
+                                board[row][col] = 0
+                        return False
+            return True
+
+        solve(board_copy)
+        return board_copy
 
 if __name__ == "__main__":
     root = tk.Tk()
