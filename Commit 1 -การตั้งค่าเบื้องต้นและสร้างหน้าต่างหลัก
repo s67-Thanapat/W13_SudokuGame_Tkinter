@@ -18,6 +18,7 @@ class SudokuGame:
         self.cells = self.create_input_fields()
         self.board = [[0 for _ in range(self.BOARD_SIZE)] for _ in range(self.BOARD_SIZE)]
         self.fill_board(self.board)
+        self.remove_numbers_from_board(self.board)  # Remove numbers from the board for gameplay
         self.update_cells(self.board)
 
     def create_grid(self):
@@ -67,6 +68,17 @@ class SudokuGame:
             return True
 
         solve(board)
+
+    def remove_numbers_from_board(self, board):
+        """Randomly remove numbers from the board to create a playable Sudoku puzzle."""
+        num_to_remove = 30  # Number of cells to remove
+        removed = 0
+        while removed < num_to_remove:
+            row = random.randint(0, self.BOARD_SIZE - 1)
+            col = random.randint(0, self.BOARD_SIZE - 1)
+            if board[row][col] != 0:  # Only remove if the cell is not already empty
+                board[row][col] = 0
+                removed += 1
 
     def update_cells(self, board):
         """Update the input fields with the current board state."""
