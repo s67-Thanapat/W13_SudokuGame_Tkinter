@@ -1,0 +1,20 @@
+import tkinter as tk  
+
+class SudokuGame:  
+    BOARD_SIZE = 9  # ขนาดของกระดาน (9x9)
+    SUBGRID_SIZE = 3  # ขนาดของกลุ่มย่อย (3x3)
+    MAX_WRONG_ATTEMPTS = 3  # จำนวนครั้งสูงสุดที่ผู้เล่นทำผิดพลาดได้
+
+    def __init__(self, master): 
+        self.master = master  # เก็บหน้าต่างหลักในตัวแปร master
+        self.master.title("Sudoku")  # ตั้งชื่อหน้าต่างว่า "Sudoku"
+        self.cell_size = 50  # ขนาดของแต่ละเซลล์ในกระดาน
+        self.solution = None  # ตัวแปรสำหรับเก็บคำตอบ 
+        self.wrong_attempts = 0  # ตัวนับจำนวนครั้งที่ทำผิดพลาด
+        self.game_over = False  # ตัวแปรตรวจสอบสถานะเกม
+        self.loaded_file_path = None  # ตัวแปรสำหรับเก็บพาธไฟล์ที่โหลด 
+
+if __name__ == "__main__": 
+    root = tk.Tk()  # สร้างหน้าต่างหลัก
+    game = SudokuGame(root)  # สร้างอ็อบเจ็กต์ของคลาส SudokuGame โดยส่งหน้าต่างหลักเป็นอาร์กิวเมนต์
+    root.mainloop()  # เริ่มการรันของแอปพลิเคชันและรอการตอบสนองจากผู้ใช้
